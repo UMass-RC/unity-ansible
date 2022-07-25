@@ -1,0 +1,9 @@
+---
+- hosts: provision
+  roles:
+    - role: common
+    - role: default-apps
+    - role: nfs-client
+    - role: ldap-client
+    - role: slurm-client
+    - role: nvidia

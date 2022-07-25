@@ -1,0 +1,65 @@
+---
+# this playbook will install and configure apache for a production environment
+- name: Install apache2
+  apt:
+    name: apache2
+    state: present
+
+- name: Enable mod_ssl
+  community.general.apache2_module:
+    state: present
+    name: ssl
+
+- name: Enable mod_ssl
+  community.general.apache2_module:
+    state: present
+    name: headers
+
+- name: Enable mod_ssl
+  community.general.apache2_module:
+    state: present
+    name: rewrite
+
+- name: Enable mod_ssl
+  community.general.apache2_module:
+    state: present
+    name: alias
+
+- name: Copy apache2.conf
+  template:
+    src: apache2.conf
+    dest: /etc/apache2/apache2.conf
+    owner: root
+    group: root
+
+- name: Set servertokens
+  lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    regexp: "^ServerTokens"
+    line: ServerTokens prod
+
+- name: Set serversignature
+  lineinfile:
+    path: /etc/apache2/conf-available/security.conf
+    regexp: "^ServerSignature"
+    line: ServerSignature Off
+
+- name: Create www directory
+  file:
+    path: "{{ apache_www_dir }}"
+    owner: root
+    group: root
+    state: directory
+
+- name: Create certs directory
+  file:
+    path: "{{ apache_certs_dir }}"
+    owner: root
+    group: root
+    state: directory
+
+- name: Restart apache2
+  systemd:
+    name: apache2
+    state: restarted
+    enabled: yes

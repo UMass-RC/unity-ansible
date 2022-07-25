@@ -1,0 +1,16 @@
+---
+- hosts: "{{ var_hosts }}"
+  vars_prompt:
+    - name: "reboot_prompt"
+      prompt: "Reboot node on provision completion (required for LDAP client) Y/n?"
+      private: no
+  roles:
+    - role: common
+    - role: default-apps
+    - role: ldap-client
+    - role: environment-modules
+    - role: user-dirs
+    - role: munge-member
+    - role: login
+    - role: slurm-client
+    - role: reboot

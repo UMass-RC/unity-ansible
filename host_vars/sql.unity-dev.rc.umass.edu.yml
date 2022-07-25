@@ -1,0 +1,3 @@
+ldap_uri: ldap://ldap.unity-dev.rc.umass.edu/
+slurm_ctld_1: slurmctld.unity-dev.rc.umass.edu
+slurm_dbd: slurmdbd.unity-dev.rc.umass.edu

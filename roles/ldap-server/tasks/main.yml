@@ -1,0 +1,132 @@
+---
+- name: Install slapd
+  apt:
+    name: slapd
+    state: present
+
+- name: Increase slapd open file limit
+  copy:
+    dest: "/etc/systemd/system/override.conf"
+    content: |
+      [Service]
+      LimitNOFILE=4096
+
+- name: Install ldap-utils
+  apt:
+    name: ldap-utils
+    state: present
+
+- name: stop slapd service
+  systemd:
+    state: stopped
+    name: slapd
+
+- name: Remove existing database
+  file:
+    state: absent
+    path: /var/lib/ldap
+
+- name: Create blank database
+  file:
+    state: directory
+    path: /var/lib/ldap
+    owner: openldap
+    group: openldap
+
+- name: start slapd service
+  systemd:
+    state: started
+    name: slapd
+
+- name: Copy unity-config.ldif
+  template:
+    src: unity-config.ldif
+    dest: /tmp/unity-config.ldif
+    owner: root
+    group: root
+
+- name: Copy ssh.ldif
+  copy:
+    src: ssh.ldif
+    dest: /etc/ldap/schema/ssh.ldif
+    owner: root
+    group: root
+
+- name: Copy autofs-ldap.ldif
+  copy:
+    src: autofs-ldap.ldif
+    dest: /etc/ldap/schema/autofs-ldap.ldif
+    owner: root
+    group: root
+
+- name: Add cosine schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/cosine.ldif
+  ignore_errors: yes
+
+- name: Add nis schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/nis.ldif
+  ignore_errors: yes
+
+- name: Add inetorgperson schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/inetorgperson.ldif
+  ignore_errors: yes
+
+- name: Add ssh schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/ssh.ldif
+  ignore_errors: yes
+
+- name: Add autofs schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/autofs-ldap.ldif
+  ignore_errors: yes
+
+- name: Initialize LDAP using unity-config.ldif
+  command: ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/unity-config.ldif
+
+# Create initial objects
+- name: Create unity-add.ldif
+  template:
+    src: unity-add.ldif
+    dest: /tmp/unity-add.ldif
+    owner: root
+    group: root
+
+- name: Add root objects
+  command: slapadd -l /tmp/unity-add.ldif
+
+- name: Restart slapd
+  systemd:
+    state: restarted
+    name: slapd
+
+# PHPLdapAdmin Setup
+- name: Install phpldapadmin
+  apt:
+    name: phpldapadmin
+    state: present
+
+- name: Delete existing phpldapadmin conf file
+  file:
+    path: /etc/phpldapadmin/config.php
+    state: absent
+
+- name: Copy phpldapadmin-config.php
+  template:
+    src: phpldapadmin-config.php
+    dest: /etc/phpldapadmin/config.php
+    owner: root
+    group: www-data
+
+- name: Copy phpldapadmin.conf
+  copy:
+    src: phpldapadmin.conf
+    dest: /etc/apache2/sites-available/phpldapadmin.conf
+    owner: root
+    group: root
+
+- name: Enable phpldapadmin site
+  command: a2ensite phpldapadmin
+
+- name: Restart apache2
+  systemd:
+    state: restarted
+    name: apache2

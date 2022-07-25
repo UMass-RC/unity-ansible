@@ -1,0 +1,62 @@
+- name: Install Slurm
+  apt:
+    name: slurmctld
+    state: present
+
+- name: deploy slurm.conf
+  copy:
+    src: slurm.conf
+    dest: /etc/slurm/slurm.conf
+    owner: root
+    group: root
+  tags: update_slurm
+
+- name: deploy cgroup.conf
+  copy:
+    src: cgroup.conf
+    dest: /etc/slurm/cgroup.conf
+    owner: root
+    group: root
+  tags: update_slurm
+
+- name: deploy gres.conf
+  copy:
+    src: gres.conf
+    dest: /etc/slurm/gres.conf
+    owner: root
+    group: root
+  tags: update_slurm
+
+- name: Create slurm state location
+  mount:
+    path: "{{ slurm_state_location }}"
+    src: "{{ slurm_ctld_statemount }}"
+    fstype: nfs
+    state: present
+
+- name: Create slurm log location
+  file:
+    path: "{{ slurm_log_location }}"
+    state: directory
+    owner: slurm
+    group: slurm
+
+- name: Enable/start slurmctld
+  systemd:
+    name: slurmctld
+    state: started
+    enabled: yes
+  register: started_slurm
+
+- name: Run scontrol reconfig for configless
+  command: scontrol reconfig
+  tags: [ never, update_slurm ]
+
+- name: Restart slurmctld
+  systemd:
+    name: slurmctld
+    state: restarted
+  when: started_slurm.skipped
+  tags: [ never, update_slurm ]
+
+# SLURM MAIL HAS TO BE SETUP MANUALLY!

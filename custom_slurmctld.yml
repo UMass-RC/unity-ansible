@@ -1,0 +1,11 @@
+---
+- hosts: "{{ var_hosts }}"
+  roles:
+    - role: common
+    - role: nfs-client
+    - role: ldap-client
+    - role: autohome
+    - role: munge-member
+    - role: slurmctld
+    - role: restricted-node
+    - role: reboot

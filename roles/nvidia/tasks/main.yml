@@ -1,0 +1,6 @@
+---
+- name: Install Nvidia Drivers
+  apt:
+    name: nvidia-driver-510-server
+    install_recommends: no
+  ignore_errors: yes

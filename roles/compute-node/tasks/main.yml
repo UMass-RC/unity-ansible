@@ -1,0 +1,127 @@
+# enable ptrace support
+
+- name: Enable PTrace
+  lineinfile:
+    path: /etc/sysctl.d/10-ptrace.conf
+    regexp: "^kernel.yama.ptrace_scope"
+    line: kernel.yama.ptrace_scope = 0
+
+# Enable memory cgroup support
+
+- name: Add kernel parameter
+  lineinfile:
+    path: "/etc/default/grub"
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"
+    state: present
+  register: kernel_param_added
+
+- name: Update grub
+  command: update-grub
+  when: kernel_param_added.changed
+
+# Create slurm locations
+- name: Create slurm state location
+  file:
+    path: "{{ slurm_state_location }}"
+    state: directory
+    owner: slurm
+    group: slurm
+
+- name: Create slurm log location
+  file:
+    path: "{{ slurm_log_location }}"
+    state: directory
+    owner: slurm
+    group: slurm
+
+# Slurm Setup
+- name: Install Slurm
+  apt:
+    name: slurmd
+    state: present
+  ignore_errors: yes
+
+- name: Add unity-epilog.sh
+  copy:
+    src: unity-epilog.sh
+    dest: /etc/slurm/unity-epilog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Add unity-prolog.sh
+  copy:
+    src: unity-prolog.sh
+    dest: /etc/slurm/unity-prolog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Add unity-taskprolog.sh
+  copy:
+    src: unity-taskprolog.sh
+    dest: /etc/slurm/unity-taskprolog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Add unity-taskepilog.sh
+  copy:
+    src: unity-taskepilog.sh
+    dest: /etc/slurm/unity-taskepilog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+# start slurmd
+- name: Start/enable slurmd
+  systemd:
+    name: slurmd
+    state: restarted
+    enabled: yes
+  ignore_errors: yes
+
+  # enable libpam_slurm_adopt
+- name: Install libpam_slurm_adopt
+  apt:
+    name: libpam-slurm-adopt
+    state: present
+  ignore_errors: yes
+
+- name: Disable pam_systemd
+  lineinfile:
+    path: /etc/pam.d/common-session
+    regexp: 'pam_systemd.so'
+    line: "#session optional pam_systemd.so"
+  register: dis_pam_systemd
+
+- name: Enable slurm pam adopt
+  lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: 'pam_slurm_adopt.so'
+    line: "-account sufficient pam_slurm_adopt.so"
+  register: set_slurm_pam_adopt
+
+- name: Enable pam access
+  lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: 'pam_access.sp'
+    line: "account required pam_access.so"
+    insertafter: 'pam_slurm_adopt.so'
+  register: set_pam_access
+
+- name: Allow admins to access
+  copy:
+    src: access.conf
+    dest: /etc/security/access.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: set_access_conf
+
+- name: Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  when: dis_pam_systemd.changed or set_slurm_pam_adopt.changed or set_pam_access.changed or set_access_conf.changed

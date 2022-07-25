@@ -1,0 +1,35 @@
+- name: Install HAProxy
+  apt:
+    pkg:
+    - haproxy
+    state: present
+    update_cache: yes
+    install_recommends: no
+
+- name: Update haproxy configuration
+  blockinfile:
+    path: /etc/haproxy/haproxy.cfg
+    block: |
+      frontend unity_login_ssh
+        bind *:2222
+        mode tcp
+        log-format "%ci:%cp [%t] %ft %b/%s %Tw/%Tc/%Tt %B %ts %ac/%fc/%bc/%sc/%rc %sq/%bq dst:%[var(sess.dst)] "
+        use_backend login
+
+      backend login
+        mode tcp
+        balance roundrobin
+        server login1 login1.unity.rc.umass.edu:22 check
+        server login2 login2.unity.rc.umass.edu:22 check
+
+- name: Set haproxy client timeout
+  lineinfile:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: 'timeout client'
+    line: timeout client 3600s
+
+- name: Set haproxy server timeout
+  lineinfile:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: 'timeout server'
+    line: timeout server 3600s

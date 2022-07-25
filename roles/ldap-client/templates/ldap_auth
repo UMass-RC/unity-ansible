@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# set to 1 to only allow those with a valid PI to return SSH keys (requires slurm utilities to be in the path)
+check_associations=0
+
+user=$1
+ldap_uri="{{ ldap_uri }}"
+ldap_basedn="{{ ldap_basedn }}"
+
+if [ "$check_associations" -eq 1 ]; then
+        output=$(sacctmgr -i -P show assoc user=$user | wc -l)
+        num_assoc=$(($output - 1))
+        if [ "$num_assoc" -eq 0 ]; then
+                exit 0
+        fi
+fi
+
+ldapsearch -x -H $ldap_uri -b $ldap_basedn '(&(objectClass=ldapPublicKey)(uid='"$user"'))' 'sshPublicKey' | sed -n '/^ /{H;d};/sshPublicKey:/x;$g;s/\n *//g;s/sshPublicKey: //gp'

@@ -1,0 +1,84 @@
+---
+- name: Install LDAP Client
+  apt:
+    name: libpam-ldapd
+    state: present
+
+- name: Set Base DN
+  lineinfile:
+    path: /etc/ldap/ldap.conf
+    regexp: "BASE"
+    line: "BASE {{ ldap_basedn }}"
+- name: Set URI in /etc/ldap/ldap.conf
+  lineinfile:
+    path: /etc/ldap/ldap.conf
+    regexp: "URI"
+    line: "URI {{ ldap_uri }}"
+- name: Set URI in /etc/nslcd.conf
+  lineinfile:
+    path: /etc/nslcd.conf
+    regexp: "uri"
+    line: "uri {{ ldap_uri }}"
+  register: set_uri_nslcd
+- name: Set URI in /etc/nslcd.conf
+  lineinfile:
+    path: /etc/nslcd.conf
+    regexp: "base"
+    line: "base {{ ldap_basedn }}"
+  register: set_basedn_nslcd
+- name: Set NSSwitch passwd
+  lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: "^passwd"
+    line: "passwd: files systemd ldap"
+- name: Set NSSwitch group
+  lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: "^group"
+    line: "group: files systemd ldap"
+- name: Set NSSwitch shadow
+  lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: "^shadow"
+    line: "shadow: files ldap"
+
+- name: Restart nslcd
+  systemd:
+    name: nslcd
+    state: restarted
+    enabled: yes
+  when: set_uri_nslcd.changed or set_basedn_nslcd.changed
+
+# Update SSH with LDAP key auth
+- name: Check if ldap command script exists
+  stat:
+    path: /etc/ssh/ldap_auth
+  register: ldapcmd_exists
+
+- name: Create LDAP script
+  template:
+    src: ldap_auth
+    dest: /etc/ssh/ldap_auth
+    owner: root
+    group: root
+    mode: "0755"
+  when: ldapcmd_exists.stat.exists == False
+
+- name: Add authorized key command for SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "AuthorizedKeysCommand "
+    line: AuthorizedKeysCommand /etc/ssh/ldap_auth
+  register: set_authorizedkeyscommand
+- name: Add authorized key user
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "AuthorizedKeysCommandUser"
+    line: AuthorizedKeysCommandUser nobody
+  register: set_authorizedkeyscommanduser
+
+- name: Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  when: set_authorizedkeyscommand.changed or set_authorizedkeyscommanduser.changed

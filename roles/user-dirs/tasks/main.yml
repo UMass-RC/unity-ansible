@@ -1,0 +1,64 @@
+- name: Mount /scratch
+  mount:
+    path: /scratch
+    src: "vast:/computescratch"
+    fstype: nfs
+    opts: defaults,nconnect=16
+    state: mounted
+
+- name: Mount /work
+  mount:
+    path: /work
+    src: "vast:/work"
+    fstype: nfs
+    opts: defaults,nconnect=16
+    state: mounted
+
+# temp mounts for /old
+- name: Mount /old/home
+  mount:
+    path: /old/home
+    src: "nese:/exports/unity-nas1/nese/home"
+    fstype: nfs
+    opts: defaults,ro
+    state: mounted
+- name: Mount /old/scratch
+  mount:
+    path: /old/scratch
+    src: "vast:/scratch"
+    fstype: nfs
+    opts: defaults,ro
+    state: mounted
+
+# autofs setup
+- name: Install autofs
+  apt:
+    name: autofs-ldap
+    state: present
+  
+- name: configure default config
+  blockinfile:
+    path: /etc/default/autofs
+    block: |
+      MASTER_MAP_NAME="ou=auto.master,ou=automount,ou=cluster,{{ ldap_basedn }}"
+      LOGGING="verbose"
+      LDAP_URI="{{ ldap_uri }}"
+      SEARCH_BASE="ou=automount,ou=cluster,{{ ldap_basedn }}"
+      MAP_OBJECT_CLASS="automountMap"
+      ENTRY_OBJECT_CLASS="automount"
+      MAP_ATTRIBUTE="ou"
+      ENTRY_ATTRIBUTE="cn"
+      VALUE_ATTRIBUTE="automountInformation"
+  register: added_autofs_conf
+
+- name: configure nsswitch
+  lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: "^automount"
+    line: "automount: files ldap"
+
+- name: Restart autofs
+  systemd:
+    name: autofs
+    state: restarted
+  when: added_autofs_conf.changed

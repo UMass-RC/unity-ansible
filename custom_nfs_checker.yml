@@ -1,0 +1,21 @@
+---
+# ansible-playbook custom_nfs_checker.yml -i hosts --ask-pass
+# maas_admin password
+
+- name: hello world
+  hosts: nfs-checker
+  tasks:
+    - name: Create a file called '/tmp/testfile.txt' with the content 'hello world'.
+      copy:
+        content: hello worldn
+        dest: /tmp/testfile.txt
+
+#- hosts: nfs-checker
+#  roles#:
+#    - role: common
+#    - role: ldap-client
+#    - role: user-dirs
+#    - role: munge-member
+#    - role: slurm-client
+#    - role: reboot
+

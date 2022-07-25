@@ -1,0 +1,13 @@
+dn: {{ ldap_basedn }}
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+structuralObjectClass: organization
+o: {{ general_name }}
+
+dn: {{ ldap_admindn }}
+objectClass: top
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+structuralObjectClass: organizationalRole
+userPassword: {{ ldap_adminhash }}

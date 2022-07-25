@@ -1,0 +1,129 @@
+- name: Enable cpu accounting
+  lineinfile:
+    path: /etc/systemd/system.conf
+    regexp: 'DefaultCPUAccounting='
+    line: DefaultCPUAccounting=yes
+
+- name: Enable memory accounting
+  lineinfile:
+    path: /etc/systemd/system.conf
+    regexp: 'DefaultMemoryAccounting='
+    line: DefaultMemoryAccounting=yes
+
+- name: Create systemd user directory
+  file:
+    path: /etc/systemd/system/user-.slice.d
+    state: directory
+    mode: '0755'
+
+- name: Create memory and cpu restrictions per user
+  blockinfile:
+    path: /etc/systemd/system/user-.slice.d/50-memory.conf
+    create: yes
+    block: |
+      [Slice]
+      MemoryMax=4iG
+      CPUQuota=100%
+
+- name: systemd reload
+  systemd:
+    daemon_reload: yes
+
+
+- name: Copy ssh_host_dsa_key
+  copy:
+    src: ssh_host_dsa_key
+    dest: /etc/ssh/ssh_host_dsa_key
+    owner: root
+    group: root
+    mode: '0600'
+  register: added_ssh_dsa_priv
+
+- name: Copy ssh_host_dsa_key.pub
+  copy:
+    src: ssh_host_dsa_key.pub
+    dest: /etc/ssh/ssh_host_dsa_key.pub
+    owner: root
+    group: root
+    mode: '0644'
+  register: added_ssh_dsa_pub
+
+- name: Copy ssh_host_ecdsa_key
+  copy:
+    src: ssh_host_ecdsa_key
+    dest: /etc/ssh/ssh_host_ecdsa_key
+    owner: root
+    group: root
+    mode: '0600'
+  register: added_ssh_ecdsa_priv
+
+- name: Copy ssh_host_ecdsa_key.pub
+  copy:
+    src: ssh_host_ecdsa_key.pub
+    dest: /etc/ssh/ssh_host_ecdsa_key.pub
+    owner: root
+    group: root
+    mode: '0644'
+  register: added_ssh_ecdsa_pub
+
+- name: Copy ssh_host_ed25519_key
+  copy:
+    src: ssh_host_ed25519_key
+    dest: /etc/ssh/ssh_host_ed25519_key
+    owner: root
+    group: root
+    mode: '0600'
+  register: added_ssh_ed25519_priv
+
+- name: Copy ssh_host_ed25519_key.pub
+  copy:
+    src: ssh_host_ed25519_key.pub
+    dest: /etc/ssh/ssh_host_ed25519_key.pub
+    owner: root
+    group: root
+    mode: '0644'
+  register: added_ssh_ed25519_pub
+
+- name: Copy ssh_host_rsa_key
+  copy:
+    src: ssh_host_rsa_key
+    dest: /etc/ssh/ssh_host_rsa_key
+    owner: root
+    group: root
+    mode: '0600'
+  register: added_ssh_rsa_priv
+
+- name: Copy ssh_host_rsa_key.pub
+  copy:
+    src: ssh_host_rsa_key.pub
+    dest: /etc/ssh/ssh_host_rsa_key.pub
+    owner: root
+    group: root
+    mode: '0644'
+  register: added_ssh_rsa_pub
+
+- name: Reset ssh keys
+  command: ssh-keygen -A
+  when: added_ssh_dsa_priv.changed or added_ssh_dsa_pub.changed or added_ssh_ecdsa_priv.changed or added_ssh_ecdsa_pub.changed or added_ssh_ed25519_priv.changed or added_ssh_ed25519_pub.changed or added_ssh_rsa_priv.changed or added_ssh_rsa_pub.changed
+
+- name: restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  when: added_ssh_dsa_priv.changed or added_ssh_dsa_pub.changed or added_ssh_ecdsa_priv.changed or added_ssh_ecdsa_pub.changed or added_ssh_ed25519_priv.changed or added_ssh_ed25519_pub.changed or added_ssh_rsa_priv.changed or added_ssh_rsa_pub.changed
+
+# allow only users with PIs
+- name: restrict node to users with PIs
+  lineinfile:
+    path: /etc/ssh/ldap_auth
+    regexp: "^check_associations"
+    line: check_associations=1
+
+# Add tmp location for login
+- name: create temp profile
+  copy:
+    src: zzz_tmp.sh
+    dest: /etc/profile.d/zzz_tmp.sh
+    owner: root
+    group: root
+    mode: '0755'

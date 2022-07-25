@@ -1,0 +1,12 @@
+---
+- name: return motd to registered var
+  command: nvidia-smi -mig 1
+
+- git:
+    repo: https://github.com/NVIDIA/mig-parted.git
+    dest: /opt/nvidia-mig
+
+- name: Install mig-parted-tool
+  command: ./install.sh
+  args:
+    chdir: /opt/nvidia-mig/deployments/systemd

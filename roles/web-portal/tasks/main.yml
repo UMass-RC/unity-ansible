@@ -1,0 +1,155 @@
+---
+# Apache2 Setup
+- name: Install PHP dependencies
+  apt:
+    pkg:
+    - php
+    - php-ldap
+    state: present
+
+- name: enable mod_proxy
+  community.general.apache2_module:
+    state: present
+    name: proxy
+
+- name: enable mod_proxy_wstunnel
+  community.general.apache2_module:
+    state: present
+    name: proxy_wstunnel
+
+- name: Copy web key
+  copy:
+    src: "{{ web_key }}"
+    dest: "{{ web_dest_key }}"
+    owner: www-data
+    group: root
+    mode: 0400
+
+- name: Copy web cert
+  copy:
+    src: "{{ web_cert }}"
+    dest: "{{ web_dest_cert }}"
+    owner: root
+    group: root
+
+- name: Create document root
+  file:
+    path: "{{ web_documentroot }}" 
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0775
+    recurse: yes
+
+- name: Copy apache default index.html
+  copy:
+    src: index.html
+    # unity.conf defines documentroot as this
+    dest: "{{ web_documentroot }}"
+    owner: root
+    group: root
+
+- name: Deploy unity.conf virtual host
+  template:
+    src: unity.conf
+    dest: /etc/apache2/sites-available/unity.conf
+    owner: root
+    group: root
+
+- name: Disable default site
+  command: a2dissite 000-default
+
+- name: Enable unity site
+  command: a2ensite unity
+
+# Shibboleth Setup
+- name: Add switchaai repository (for shibboleth)
+  apt:
+    deb: "{{ shib_repo_url }}"
+
+- name: Install shibboleth
+  apt:
+    name: shibboleth
+    update_cache: yes
+    state: present
+
+- name: Deploy shibboleth2.xml
+  template:
+    src: shibboleth2.xml
+    dest: "{{ shib_conf_path }}"
+    owner: root
+    group: root
+
+- name: Copy attribute-map.xml
+  copy:
+    src: attribute-map.xml
+    dest: "{{ shib_attr_path }}"
+    owner: root
+    group: root
+
+- name: Create shib certs directory
+  file:
+    path: "{{ apache_certs_dir }}/shib"
+    owner: root
+    group: root
+    state: directory
+
+- name: Copy shibboleth key file
+  copy:
+    src: "{{ shib_key }}"
+    dest: "{{ shib_dest_key }}"
+    owner: _shibd
+    group: root
+    mode: 0400
+
+- name: Copy shibboleth cert file
+  copy:
+    src: "{{ shib_cert }}"
+    dest: "{{ shib_dest_cert }}"
+    owner: root
+    group: root
+
+- name: enable mod_shib
+  community.general.apache2_module:
+    state: present
+    name: shib
+
+- name: Restart shibd
+  systemd:
+    name: shibd
+    state: restarted
+
+#- name: Download unity web portal release
+#  get_url:
+#    url: "{{ web_portal_release }}"
+#    dest: "{{ apache_www_dir }}"
+#  register: unity_web_downloaded
+
+#- name: Extract downloaded release
+#  unarchive:
+#    remote_src: yes
+#    src: "{{ unity_web_downloaded.dest }}"
+#    dest: "{{ apache_www_dir }}"
+#  register: unity_web_extracted
+
+#- name: Delete downloaded release
+#  file:
+#    path: "{{ unity_web_downloaded.dest }}"
+#    state: absent
+
+#- name: Create a link to release
+#  file:
+#    src: "{{ unity_web_extracted.dest }}"
+#    dest: "{{ apache_www_dir }}/unity-web-portal/unity-web-portal-{{ web_portal_version}}"
+#    owner: root
+#    group: root
+#    state: link
+
+- name: Stop apache2
+  systemd:
+    name: apache2
+    state: stopped
+
+- name: message
+  debug:
+    msg: "Please keep in mind that the unity-web-portal installation should be handled manually, and apache is currently stopped. Start apache2 service when everything is ready."

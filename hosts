@@ -1,0 +1,17 @@
+[cpu-node]
+astroth-cpu[001:008:1].unity.rc.umass.edu
+ceewater-cpu[001:007:1].unity.rc.umass.edu
+toltec-cpu[001:007:1].unity.rc.umass.edu
+cpu[001:021:1].unity.rc.umass.edu
+zhoulin-cpu[001:006:1].unity.rc.umass.edu
+
+[gpu-node]
+astroth-gpu[001:003:1].unity.rc.umass.edu
+ece-gpu[001:002:1].unity.rc.umass.edu
+gypsum-gpu[001:100:1].unity.rc.umass.edu
+gypsum-gpu[104:192:1].unity.rc.umass.edu
+ials-gpu[001:033:1].unity.rc.umass.edu
+gpu[001:004:1].unity.rc.umass.edu
+
+[login-node]
+login[1:2:1].unity.rc.umass.edu

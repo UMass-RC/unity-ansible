@@ -1,0 +1,16 @@
+---
+- hosts: provision-cpu
+  vars_prompt:
+    - name: "reboot_prompt"
+      prompt: "Reboot node on provision completion (required for LDAP client) Y/n?"
+      private: no
+  roles:
+    - role: common
+    - role: default-apps
+    - role: ldap-client
+    - role: user-dirs
+    - role: munge-member
+    - role: slurm-client
+    - role: compute-node
+    - role: environment-modules
+    - role: reboot

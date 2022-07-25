@@ -1,0 +1,76 @@
+---
+- name: Install pymysql for ansible
+  apt:
+    name: python3-pymysql
+    state: present
+
+# mysql server setup
+- name: Install mariadb server
+  apt:
+    name: mariadb-server
+    state: present
+
+- name: Install mariadb client
+  apt:
+    name: mariadb-client
+    state: present
+
+#- name: create admin user
+#  community.mysql.mysql_user:
+#    check_implicit_admin: yes
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+#    name: "{{ mysql_admin_user }}"
+#    host: localhost
+#    password: "{{ mysql_admin_pass }}"
+#    priv: "*.*:ALL,GRANT"
+#    state: present
+
+- name: Delete anonymous MySQL user
+  community.mysql.mysql_user:
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: ""
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - localhost
+    - "{{ ansible_nodename }}"
+
+- name: Remove MySQL test database
+  community.mysql.mysql_db:
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: test
+    state: absent
+
+- name: Set global bind address for mariadb
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: "^bind-address"
+    line: bind-address = 0.0.0.0
+
+- name: Restart mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+
+- name: Install phpmyadmin and dependencies
+  apt:
+    pkg:
+    - phpmyadmin
+    state: present
+
+- name: Copy phpmyadmin.conf
+  copy:
+    src: phpmyadmin.conf
+    dest: /etc/apache2/sites-available/phpmyadmin.conf
+    owner: root
+    group: root
+
+- name: Enable phpmyadmin site
+  command: a2ensite phpmyadmin
+
+- name: Restart apache2
+  systemd:
+    state: restarted
+    name: apache2

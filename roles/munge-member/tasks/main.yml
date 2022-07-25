@@ -1,0 +1,20 @@
+- name: Install Munge
+  apt:
+    name: munge
+    state: present
+
+- name: Copy munge.key
+  copy:
+    src: munge.key
+    dest: /etc/munge/munge.key
+    owner: munge
+    group: munge
+    mode: '0400'
+  register: added_munge_key
+
+- name: Restart/enable munge
+  systemd:
+    name: munge
+    state: restarted
+    enabled: yes
+  when: added_munge_key.changed

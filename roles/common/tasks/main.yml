@@ -1,0 +1,115 @@
+# SSH Server Setup
+- name: (OpenSSH Server) Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "PasswordAuthentication"
+    line: PasswordAuthentication no
+  register: set_disablepwd_auth
+- name: (OpenSSH Server) Enable public key authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "PubkeyAuthentication"
+    line: PubkeyAuthentication yes
+  register: set_enablepubkey_auth
+- name: (OpenSSH Server) Enable root login for SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "PermitRootLogin"
+    line: PermitRootLogin yes
+  register: set_permitrootlogin
+- name: (OpenSSH Server) Enable X11
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "X11Forwarding"
+    line: X11Forwarding yes
+  register: set_x11forwarding
+- name: (OpenSSH Server) Disable MOTD
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "PrintMotd"
+    line: PrintMotd no
+  register: set_printmotd
+- name: (OpenSSH Server) Disable last login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "PrintLastLog"
+    line: PrintLastLog no
+  register: set_printlastlog
+# restart openssh server only if changes were made above
+- name: (OpenSSH Server) Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  when: set_disablepwd_auth.changed or set_enablepubkey_auth.changed or set_permitrootlogin.changed or set_x11forwarding.changed or set_printmotd.changed or set_printlastlog.changed
+
+# Disable motd scripts
+- name: Check if motd folder is already empty
+  find:
+    paths: '/etc/update-motd.d'
+  register: motd_found
+- name: Delete MOTD
+  file:
+    path: /etc/update-motd.d
+    state: absent
+  when: motd_found.matched > 0
+- name: Create MOTD folder
+  file:
+    path: /etc/update-motd.d
+    state: directory
+    owner: root
+    group: root
+
+# Add incommon CA certificate
+- name: Add incommon folder
+  file:
+    path: /usr/local/share/ca-certificates/incommon
+    state: directory
+    mode: '0755'
+- name: Copy incommon certificate
+  copy:
+    src: incommon.crt
+    dest: /usr/local/share/ca-certificates/incommon/incommon.crt
+    mode: '0644'
+  register: added_incommon
+# Only update system certs if changes were made above
+- name: Update certificates
+  command: update-ca-certificates
+  when: added_incommon.changed
+
+# User environment files
+- name: Add default bashrc
+  copy:
+    src: bash.bashrc
+    dest: /etc/bash.bashrc
+    mode: '0644'
+    owner: root
+    group: root
+- name: Add default profile
+  copy:
+    src: 00_def_profile.sh
+    dest: /etc/profile.d/00_def_profile.sh
+    mode: '0644'
+    owner: root
+    group: root
+
+# Remove unattended upgrades (this is what auto-updates systems, which we don't want)
+- name: Remove unattended upgrades
+  apt:
+    name: unattended-upgrades
+    state: absent
+
+# Install prerequisite apt pacakges
+- name: Add gnupg
+  apt:
+    pkg:
+    - gnupg
+    - nfs-common
+    - ssl-cert
+    install_recommends: no
+    update_cache: yes
+    state: present
+
+# Add Unity PPA
+- name: Add Unity PPA
+  apt_repository:
+    repo: "{{ unity_ppa }}"

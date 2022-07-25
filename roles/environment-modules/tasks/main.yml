@@ -1,0 +1,37 @@
+- name: Mount /modules
+  mount:
+    path: /modules
+    src: "vast:/modules"
+    fstype: nfs
+    state: mounted
+
+# Environment Modules
+- name: Create symlink
+  ansible.builtin.file:
+    src: "{{ lmod_location }}/lmod/init/profile"
+    dest: /etc/profile.d/zz_lmod_profile.sh
+    state: link
+- name: Copy modulepath profile file
+  ansible.builtin.copy:
+    src: zzz_lmod.sh
+    dest: /etc/profile.d/zzz_lmod_modulepath.sh
+    owner: root
+    group: root
+    mode: '0644'
+
+# zsh profile fix, default zprofile is nothing, create simlink to /etc/profile instead
+- name: learn about /etc/zsh/zprofile
+  stat:
+    path: /etc/zsh/zprofile
+  register: zprofile_stat
+
+- name: Move zprofile to zprofile_old if it exists
+  command: mv /etc/zsh/zprofile /etc/zsh/zprofile_old
+  when: zprofile_stat.stat.exists and (zprofile_stat.stat.islnk == False)
+
+- name: Create symbolic link to /etc/profile
+  ignore_errors: yes
+  file:
+    src: "/etc/profile"
+    dest: "/etc/zsh/zprofile"
+    state: link

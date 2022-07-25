@@ -1,0 +1,21 @@
+dn: olcDatabase={1}mdb,cn=config
+changeType: modify
+replace: olcSuffix
+olcSuffix: {{ ldap_basedn }}
+-
+replace: olcRootDN
+olcRootDN: {{ ldap_admindn }}
+-
+replace: olcRootPW
+olcRootPW: {{ ldap_adminhash }}
+-
+delete: olcAccess
+-
+add: olcAccess
+olcAccess: {0}to attrs=userPassword by anonymous auth by * none
+-
+add: olcAccess
+olcAccess: {1}to * by * read
+-
+add: olcSizeLimit
+olcSizeLimit: unlimited

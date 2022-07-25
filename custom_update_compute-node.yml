@@ -1,0 +1,4 @@
+---
+- hosts: gpu-node,cpu-node
+  roles:
+    - role: compute-node

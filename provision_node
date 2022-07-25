@@ -1,0 +1,5 @@
+#!/bin/bash
+
+path=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+ansible-playbook $path/custom_$1.yml -i "$2," --extra-vars "var_hosts=$2"

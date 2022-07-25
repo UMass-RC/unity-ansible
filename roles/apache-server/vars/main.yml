@@ -1,0 +1,3 @@
+# Apache Vars
+apache_certs_dir: "/srv/certs"
+apache_www_dir: "/srv/www"

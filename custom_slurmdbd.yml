@@ -1,0 +1,12 @@
+---
+- hosts: "{{ var_hosts }}"
+  roles:
+    - role: common
+    - role: ldap-client
+    - role: autohome
+    - role: restricted-node
+    - role: apache-server
+    - role: mysql-server
+    - role: munge-member
+    - role: slurmdbd
+    - role: reboot

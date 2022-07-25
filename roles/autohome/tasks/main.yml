@@ -1,0 +1,7 @@
+---
+# enable pam_mkhomedir
+- name: enable pam_mkhomedir
+  lineinfile:
+    path: /etc/pam.d/common-session
+    regexp: "^session optional pam_mkhomedir.so"
+    line: "session optional pam_mkhomedir.so skel=/etc/skel umask=077"

@@ -1,0 +1,5 @@
+---
+- hosts: gpu-node,cpu-node,login-node
+  gather_facts: no
+  roles:
+    - role: default-apps

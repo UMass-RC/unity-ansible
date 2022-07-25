@@ -1,0 +1,5 @@
+# Slurm Setup
+- name: Install Slurm-client
+  apt:
+    name: slurm-client
+    state: present

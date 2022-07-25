@@ -1,0 +1,40 @@
+---
+# slurmdbd setup
+- name: Create a new database with name 'slurm_acct_db'
+  community.mysql.mysql_db:
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: "{{ slurmdbd_mysql_db }}"
+    state: present
+
+- name: create random password
+  set_fact:
+    slurmdbd_mysql_pass: "{{ lookup('password', '/dev/null', seed=inventory_hostname) }}"
+
+- name: Create slurmdbd mysql user
+  community.mysql.mysql_user:
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: "{{ slurmdbd_mysql_user }}"
+    host: localhost
+    password: "{{ slurmdbd_mysql_pass }}"
+    priv: "{{ slurmdbd_mysql_db }}.*:ALL"
+    state: present
+
+- name: Install Slurm
+  apt:
+    name: slurmdbd
+    state: present
+
+- name: deploy slurmdbd.conf
+  template:
+    src: slurmdbd.conf
+    dest: /etc/slurm/slurmdbd.conf
+    owner: root
+    group: root
+
+- name: Enable slurmdbd
+  systemd:
+    name: slurmdbd
+    state: restarted
+    enabled: yes

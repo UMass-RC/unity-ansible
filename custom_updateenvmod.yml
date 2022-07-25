@@ -1,0 +1,4 @@
+---
+- hosts: gpu-node,cpu-node,login-node
+  roles:
+    - role: environment-modules

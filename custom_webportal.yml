@@ -1,0 +1,9 @@
+---
+- hosts: "{{ var_hosts }}"
+  roles:
+    - role: common
+    - role: ldap-client
+    - role: autohome
+    - role: apache-server
+    - role: web-portal
+    - role: reboot

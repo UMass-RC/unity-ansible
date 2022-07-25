@@ -1,0 +1,40 @@
+# LDAP Vars
+ldap_uri: ldap://identity.unity.rc.umass.edu/  # Address reachable from all LDAP clients
+ldap_basedn: "dc=unity,dc=rc,dc=umass,dc=edu"
+ldap_admindn: "cn=admin,dc=unity,dc=rc,dc=umass,dc=edu"  # DN of admin user, ldap_basedn must be prefixed
+ldap_adminhash: "{SSHA}MnOfNeBYfRO5EsspMDu3BfheLga9cAfE"  # SSHA Hash (generate using slappasswd)
+
+# Environment Modules
+lmod_location: "/modules/lmod/lmod"
+lmod_modulepath: "/modules/modulefiles"
+
+# Slurm Vars
+slurm_ctld_statemount: vast:/slurmctld-state
+slurm_state_location: /var/spool/slurm
+slurm_log_location: /var/log/slurm
+
+# Web Vars
+web_webmaster: "hpc@it.umass.edu"  # for shibboleth / apache information
+web_admins: "hsaplakoglu@umass.edu jgriffin@umass.edu aryamanagraw@umass.edu calvinstaffo@umass.edu drparker@umass.edu simonleary@umass.edu"
+web_domain: "unity.rc.umass.edu"
+web_key: "unity-ssl.key"
+web_cert: "unity_rc_umass_edu.cer"
+
+# SHIB vars
+shib_entityid: "https://unity.rc.umass.edu/shibboleth"
+shib_discovery_url: "https://unity.rc.umass.edu/panel-auth.php"
+shib_key: "sp-key.pem"  # Filename in the "files" dir in the ansible tree
+shib_cert: "sp-cert.pem"  # Filename in the "files" dir in the ansible tree
+shib_allowed_entities: |
+  <Include>https://webauth.umass.edu/idp/shibboleth</Include>
+  <Include>https://idp.umassd.edu/idp/shibboleth</Include>
+  <Include>https://shibboleth.umassmed.edu/idp/shibboleth</Include>
+  <Include>https://vm-shibboleth.umb.edu/idp/shibboleth</Include>
+  <Include>urn:mace:incommon:mit.edu</Include>
+  <Include>https://neuidmsso.neu.edu/idp/shibboleth</Include>
+  <Include>https://shib.bu.edu/idp/shibboleth</Include>
+  <Include>https://fed.huit.harvard.edu/idp/shibboleth</Include>
+  <Include>https://sso.uri.edu/idp</Include>
+  <Include>https://shibidp.amherst.edu/idp/shibboleth</Include>
+  <Include>urn:mace:incommon:uiuc.edu</Include>
+  <Include>urn:mace:incommon:stonybrook.edu</Include>

@@ -1,0 +1,19 @@
+# open on demand
+---
+- hosts: ood
+#  pre_tasks:
+#    - name: Install Applications
+#      apt:
+#        name:
+#        - python3-dnf # ood_ansible asked me to install this
+#        state: present
+  roles:
+#    - role: common
+#    - role: ldap-client
+#    - role: user-dirs
+#    - role: autohome
+#    - role: munge-member
+#    - role: slurm-client
+#    - role: web-portal # includes apache-server role
+#    - role: reboot # makes an error, do it manually
+    - role: ood-ansible-2.0.6

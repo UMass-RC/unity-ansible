@@ -1,0 +1,9 @@
+---
+- hosts: "{{ var_hosts }}"
+  roles:
+    - role: common
+    - role: ldap-client
+    - role: ssh_haproxy
+    - role: restricted-node
+    - role: autohome
+    - role: reboot

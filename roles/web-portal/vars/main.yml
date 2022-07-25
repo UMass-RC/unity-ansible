@@ -1,0 +1,10 @@
+---
+shib_repo_url: "https://pkg.switch.ch/switchaai/ubuntu/dists/focal/main/binary-all/misc/switchaai-apt-source_1.0.0~ubuntu20.04.1_all.deb"
+shib_conf_path: "/etc/shibboleth/shibboleth2.xml"
+shib_attr_path: "/etc/shibboleth/attribute-map.xml"
+shib_dest_key: "{{ apache_certs_dir }}/shib/{{ shib_key }}"
+shib_dest_cert: "{{ apache_certs_dir }}/shib/{{ shib_cert }}"
+
+web_dest_key: "{{ apache_certs_dir }}/{{ web_key }}"
+web_dest_cert: "{{ apache_certs_dir }}/{{ web_cert }}"
+web_documentroot: "{{ apache_www_dir }}/unity-web-portal/webroot"
