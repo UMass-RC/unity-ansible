@@ -1,4 +1,5 @@
 # Unity Ansible Playbooks
+With this repository we're trying to follow to the recommended layout/procedures as shown in the [ansible user guide](https://docs.ansible.com/ansible/latest/user_guide/sample_setup.html).
 
 ## Initializing Repo
 
